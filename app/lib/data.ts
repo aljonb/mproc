@@ -70,6 +70,13 @@ export const PROCEDURES: MedicalItem[] = [
   },
   
   // Ultrasounds
+
+  {
+    canonical: "US thyroid",
+    variations: ["US, thyroid", "US Soft Tissue of Head & Neck"],
+    category: "ultrasound"
+  },
+
   {
     canonical: "US testicle",
     variations: ["US, testicle"],
