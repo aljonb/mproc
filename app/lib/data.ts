@@ -34,7 +34,7 @@ export const PROVIDERS: MedicalItem[] = [
   },
   {
     canonical: "Pulmonologist",
-    variations: ["pulmo", "pulmonology", "pulmonologist"],
+    variations: ["pulmo", "pulmonology", "pulmonologist", "sleep medicine referral", "sleep medicine"],
     category: "provider"
   },
   {
@@ -127,12 +127,12 @@ export const PROCEDURES: MedicalItem[] = [
   // Sleep Tests
   {
     canonical: "Sleep Apnea Home Test",
-    variations: ["sleep apnea home test", "sleep apnea test"],
+    variations: ["sleep apnea home test", "sleep apnea test", "home sleep study"],
     category: "test"
   },
   {
     canonical: "Sleep Insomnia Home Test",
-    variations: ["sleep insomnia home test", "insomnia test"],
+    variations: ["sleep insomnia home test", "insomnia test", "insomnia device", "electroencephalogram eeg all night recording", "eeg all night recording"],
     category: "test"
   },
   
@@ -522,7 +522,7 @@ export const PROCEDURES: MedicalItem[] = [
   },
   {
     canonical: "EVOX",
-    variations: ["evox", "electrophysiologic evaluation"],
+    variations: ["evox", "electrophysiologic evaluation", "elctrophysiologic evaluation"],
     category: "test"
   },
   {
@@ -532,7 +532,12 @@ export const PROCEDURES: MedicalItem[] = [
   },
   {
     canonical: "EEG",
-    variations: ["eeg 61 min", "eeg"],
+    variations: ["eeg 61 min", "eeg", "electroencephalogram"],
+    category: "test"
+  },
+  {
+    canonical: "EKG",
+    variations: ["ekg", "electrocardiogram", "ecg"],
     category: "test"
   },
   {

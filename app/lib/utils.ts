@@ -4,9 +4,12 @@ import { ALL_MEDICAL_ITEMS, MedicalItem } from './data';
 export function normalizeText(text: string): string {
   let normalized = text
     .toLowerCase()
+    .replace(/(\d)([a-z])/g, '$1 $2') 
+    .replace(/([a-z])(\d)/g, '$1 $2')
     .replace(/\s+/g, ' ') // collapse whitespace
-    .replace(/[^\w\s\/+\-]/g, '') // keep only alphanumeric, spaces, and medical chars
-    .trim();
+    .replace(/[^\w\s\/+\-]/g, ' ') // keep only alphanumeric, spaces, and medical chars (replace others with space)
+    .trim()
+    .replace(/\s+/g, ' '); // collapse any new whitespace created
   
   // Expand common medical abbreviations to improve matching
   normalized = normalized
@@ -28,11 +31,32 @@ export function findMedicalItem(text: string): MedicalItem | null {
   for (const item of ALL_MEDICAL_ITEMS) {
     for (const variation of item.variations) {
       const normalizedVariation = normalizeText(variation);
-      if (normalizedText.includes(normalizedVariation)) {
-        // Keep track of the longest match
+      
+      // Use word boundary matching for ALL variations to prevent false matches
+      // Also allow matching after digits (for date concatenation like "09242025electrocardiogram")
+      // e.g., "gi" shouldn't match inside "neurologist"
+      // e.g., "cardio" shouldn't match inside "electrocardiogram"
+      // Escape special regex characters in the variation
+      const escapedVariation = normalizedVariation.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      
+      // Match at word boundary OR after a digit (for dates), and before word boundary
+      const regex = new RegExp(`(?:\\b|(?<=\\d))${escapedVariation}\\b`);
+      
+      if (regex.test(normalizedText)) {
         if (!bestMatch || normalizedVariation.length > bestMatch.length) {
           bestMatch = { item, length: normalizedVariation.length };
         }
+      } 
+      // FALLBACK: Simple includes check with space boundaries (since we normalized everything to spaces)
+      // This handles cases where regex boundaries might be tricky
+      else {
+         const paddedText = ' ' + normalizedText + ' ';
+         const paddedVariation = ' ' + normalizedVariation + ' ';
+         if (paddedText.includes(paddedVariation)) {
+            if (!bestMatch || normalizedVariation.length > bestMatch.length) {
+              bestMatch = { item, length: normalizedVariation.length };
+            }
+         }
       }
     }
     
@@ -147,23 +171,64 @@ export interface Appointment {
   text: string;
   medicalItem: MedicalItem | null;
   lineNumber: number;
+  date: Date | null;
+  isCancelled?: boolean;
+  cancellationReason?: string;
 }
 
 export function parseAppointments(input: string): Appointment[] {
   const lines = input.split('\n').filter(line => line.trim());
   const appointments: Appointment[] = [];
   
-  lines.forEach((line, index) => {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     const medicalItem = findMedicalItem(line);
     
     if (medicalItem) {
-      appointments.push({
-        text: line.trim(),
-        medicalItem,
-        lineNumber: index + 1
-      });
+      // Extract date from the appointment line
+      const date = extractDate(line);
+      
+      // Check previous lines for cancellation status
+      let isCancelled = false;
+      let cancellationReason = '';
+      
+      // Look back up to 3 lines to find cancellation info
+      for (let j = Math.max(0, i - 3); j < i; j++) {
+        const prevLine = lines[j].toLowerCase();
+        
+        // Check if this appointment was cancelled
+        if (prevLine.includes('x cancelled') || prevLine.includes('cancelled:')) {
+          isCancelled = true;
+          
+          // The next line after 'x cancelled:' usually contains the reason
+          if (j + 1 < lines.length) {
+            const reasonLine = lines[j + 1].trim();
+            cancellationReason = reasonLine;
+          }
+          break;
+        }
+      }
+      
+      // Only include appointment if:
+      // 1. Not cancelled at all, OR
+      // 2. Cancelled but with "PATIENT RESCHEDULED" reason, OR
+      // 3. Cancelled but with "PATIENT CANCELLED" reason (patient decided not to do it)
+      const isValidAppointment = !isCancelled || 
+                                  cancellationReason.toUpperCase().includes('PATIENT RESCHEDULED') ||
+                                  cancellationReason.toUpperCase().includes('PATIENT CANCELLED');
+      
+      if (isValidAppointment) {
+        appointments.push({
+          text: line.trim(),
+          medicalItem,
+          lineNumber: i + 1,
+          date,
+          isCancelled,
+          cancellationReason
+        });
+      }
     }
-  });
+  }
   
   return appointments;
 }
@@ -172,12 +237,16 @@ export function parseAppointments(input: string): Appointment[] {
 export const EXCLUSION_PATTERNS = [
   'refused',
   'declined',
+  'denied',
   'patient refused',
   'pt refused',
   'patient declined',
   'pt declined',
   'has own',
   'has their own',
+  'having her own',
+  'having his own',
+  'having their own',
   'outside',
   'established with',
   'established w/',
@@ -192,38 +261,81 @@ export const EXCLUSION_PATTERNS = [
   'won\'t do',
   'will not do',
   'does not want',
-  'doesn\'t want'
+  'doesn\'t want',
+  'hold off',
+  'hold off on',
+  'wants to hold off',
+  'can\'t',
+  'cant',
+  'cannot',
+  'can not',
+  'unable to'
 ];
 
 export function checkNotesForExclusion(notes: string, medicalItem: MedicalItem): boolean {
-  const normalizedNotes = normalizeText(notes);
+  // Split notes into lines for more accurate context checking
+  // Do this BEFORE normalization so we don't lose line breaks
+  const lines = notes.split('\n').map(line => line.trim()).filter(line => line);
+  
   const itemVariations = medicalItem.variations.map(v => normalizeText(v));
   
-  // Check if notes mention this medical item
-  const mentionsItem = itemVariations.some(variation => 
-    normalizedNotes.includes(variation)
-  );
-  
-  if (!mentionsItem) {
-    return false; // Notes don't mention this item at all
+  // Check each line for mentions of the item with exclusion patterns
+  for (const rawLine of lines) {
+    const normalizedLine = normalizeText(rawLine);
+    
+    // Check if this line mentions the item
+    const mentionsItem = itemVariations.some(variation => 
+      normalizedLine.includes(variation)
+    );
+    
+    if (!mentionsItem) continue;
+    
+    // Check if any exclusion pattern appears in the SAME line
+    for (const pattern of EXCLUSION_PATTERNS) {
+      const normalizedPattern = normalizeText(pattern);
+      if (normalizedLine.includes(normalizedPattern)) {
+        return true; // Found exclusion pattern on the same line as the item
+      }
+    }
   }
   
-  // Check if any exclusion pattern appears near the medical item mention
-  for (const pattern of EXCLUSION_PATTERNS) {
-    const normalizedPattern = normalizeText(pattern);
+  return false;
+}
+
+// Check if notes indicate refusal of sleep-related tests
+export function checkSleepRefusalInNotes(notes: string): boolean {
+  const normalizedNotes = normalizeText(notes);
+  
+  const sleepKeywords = ['sleep', 'insomnia', 'apnea', 'sleep device', 'sleep study', 'sleep test'];
+  const refusalPatterns = [
+    'hold off',
+    'hold off on',
+    'wants to hold off',
+    'refused',
+    'declined',
+    'does not want',
+    'doesnt want',
+    'will not do',
+    'wont do'
+  ];
+  
+  // Check if any sleep keyword appears with any refusal pattern
+  for (const sleepKeyword of sleepKeywords) {
+    const normalizedKeyword = normalizeText(sleepKeyword);
+    const keywordIndex = normalizedNotes.indexOf(normalizedKeyword);
     
-    // Look for the pattern in proximity to any variation of the medical item
-    for (const variation of itemVariations) {
-      const itemIndex = normalizedNotes.indexOf(variation);
-      if (itemIndex === -1) continue;
-      
-      // Check 100 chars before and after the item mention
-      const contextStart = Math.max(0, itemIndex - 100);
-      const contextEnd = Math.min(normalizedNotes.length, itemIndex + variation.length + 100);
-      const context = normalizedNotes.substring(contextStart, contextEnd);
-      
+    if (keywordIndex === -1) continue;
+    
+    // Check 150 chars before and after the sleep keyword
+    const contextStart = Math.max(0, keywordIndex - 150);
+    const contextEnd = Math.min(normalizedNotes.length, keywordIndex + normalizedKeyword.length + 150);
+    const context = normalizedNotes.substring(contextStart, contextEnd);
+    
+    // Check if any refusal pattern appears in this context
+    for (const pattern of refusalPatterns) {
+      const normalizedPattern = normalizeText(pattern);
       if (context.includes(normalizedPattern)) {
-        return true; // Found exclusion pattern near the item
+        return true;
       }
     }
   }
@@ -257,14 +369,28 @@ export function analyzeMissingProcedures(
     return isOrderRecent(order.date);
   });
   
+  // Check if notes contain general sleep refusal
+  const sleepRefusedInNotes = checkSleepRefusalInNotes(notesInput);
+  
   // Check each recent order
   for (const order of recentOrders) {
     if (!order.medicalItem) continue;
     
-    // Check if there's a matching appointment
-    const hasAppointment = appointments.some(apt => 
-      apt.medicalItem?.canonical === order.medicalItem?.canonical
-    );
+    // Check if there's a matching appointment ON OR AFTER the order date
+    const hasAppointment = appointments.some(apt => {
+      if (apt.medicalItem?.canonical !== order.medicalItem?.canonical) {
+        return false;
+      }
+      
+      // If order has no date, accept any appointment
+      if (!order.date) return true;
+      
+      // If appointment has no date, accept it (can't verify timing)
+      if (!apt.date) return true;
+      
+      // Only count appointments on or after the order date
+      return apt.date >= order.date;
+    });
     
     if (hasAppointment) {
       continue; // Has appointment, not missing
@@ -273,7 +399,12 @@ export function analyzeMissingProcedures(
     // Check if notes exclude this item
     const excludedByNotes = checkNotesForExclusion(notesInput, order.medicalItem);
     
-    if (excludedByNotes) {
+    // Check if this is a sleep test and sleep was generally refused
+    const isSleepTest = order.medicalItem.canonical === "Sleep Apnea Home Test" || 
+                        order.medicalItem.canonical === "Sleep Insomnia Home Test";
+    const excludedBySleepRefusal = isSleepTest && sleepRefusedInNotes;
+    
+    if (excludedByNotes || excludedBySleepRefusal) {
       continue; // Excluded by notes
     }
     
@@ -284,7 +415,7 @@ export function analyzeMissingProcedures(
       orderText: order.text,
       reason: hasAppointment 
         ? 'Has appointment' 
-        : excludedByNotes 
+        : (excludedByNotes || excludedBySleepRefusal)
         ? 'Addressed in notes' 
         : 'No appointment found'
     });
