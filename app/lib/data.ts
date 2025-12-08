@@ -13,7 +13,7 @@ export const PROVIDERS: MedicalItem[] = [
     category: "provider"
   },
   {
-    canonical: "cardiologist",
+    canonical: "cardio",
     variations: ["cardiology", "cardiologist",],
     category: "provider"
   },
@@ -148,7 +148,7 @@ export const PROCEDURES: MedicalItem[] = [
   // Sleep Tests
   {
     canonical: "sleep apnea device",
-    variations: ["sleep apnea home test", "sleep apnea test", "home sleep study", "home sleep testing"],
+    variations: ["sleep apnea device", "sleep apnea test", "home sleep study", "home sleep testing"],
     category: "test"
   },
   {
