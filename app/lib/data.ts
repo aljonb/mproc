@@ -152,7 +152,7 @@ export const PROCEDURES: MedicalItem[] = [
     category: "test"
   },
   {
-    canonical: "sleep insomnia home test",
+    canonical: "insomnia device",
     variations: ["sleep insomnia home test", "insomnia test", "insomnia device", "electroencephalogram eeg all night recording", "eeg all night recording"],
     category: "test"
   },
