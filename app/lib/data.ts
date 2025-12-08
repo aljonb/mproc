@@ -148,7 +148,7 @@ export const PROCEDURES: MedicalItem[] = [
   // Sleep Tests
   {
     canonical: "sleep apnea device",
-    variations: ["sleep apnea device", "sleep apnea test", "home sleep study", "home sleep testing"],
+    variations: ["sleep apnea device", "home sleep testing (PROC) (submit)", "sleep apnea test", "home sleep study", "home sleep testing", "home sleep testing (PROC)", "SLEEP APNEA HOME TEST"],
     category: "test"
   },
   {
@@ -540,7 +540,8 @@ export const PROCEDURES: MedicalItem[] = [
       "nerve conduction study emg lower",
       "nerve conduction emg lower",
       "ncs emg lower",
-      "lower extremity electromyogram"
+      "lower extremity electromyogram",
+      "EMG 10 Min LOWER, 20 min"
     ],
     category: "test"
   },
