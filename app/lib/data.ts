@@ -28,7 +28,7 @@ export const PROVIDERS: MedicalItem[] = [
     category: "provider"
   },
   {
-    canonical: "orthopedist",
+    canonical: "ortho",
     variations: ["ortho", "orthopedist", "orthopedic", "orthopedics"],
     category: "provider"
   },
