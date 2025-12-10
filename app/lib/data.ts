@@ -529,7 +529,9 @@ export const PROCEDURES: MedicalItem[] = [
       "ncs emg upper",
       "upper extremity electromyogram",
       "nerve conduction study/EMG, upper extremity",
-      " EMG 10 Min UPPER, 20 min"
+      " EMG 10 Min UPPER, 20 min",
+      "nerve conduction study/EMG, upper extremity",
+      " EMG 10 Min UPPER, 10 min"
     ],
     category: "test"
   },
@@ -543,7 +545,8 @@ export const PROCEDURES: MedicalItem[] = [
       "ncs emg lower",
       "lower extremity electromyogram",
       "EMG 10 Min LOWER, 20 min",
-      "EMG 10 Min LOWER, 10 min"
+      "EMG 10 Min LOWER, 10 min",
+      "nerve conduction study/EMG, lower extremity (PROC) (submit)"
     ],
     category: "test"
   },
