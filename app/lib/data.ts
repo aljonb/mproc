@@ -7,6 +7,12 @@ export interface MedicalItem {
 }
 
 export const PROVIDERS: MedicalItem[] = [
+
+  {
+    canonical: "PCP",
+    variations: ["internal medicine referral", "PCP_Luyten"],
+    category: "provider"
+  },
   {
     canonical: "allergist",
     variations: ["allergist", "Allergy FU", "Allergist_Babazadeh", " Allergy NEW, 20 min"],
@@ -75,7 +81,7 @@ export const PROCEDURES: MedicalItem[] = [
 
   {
     canonical: "US thyroid",
-    variations: ["US, thyroid", "US Soft Tissue of Head & Neck"],
+    variations: ["US, thyroid", "US Soft Tissue of Head & Neck", "US Soft Tissue of Head & Neck, 20"],
     category: "ultrasound"
   },
 
@@ -189,8 +195,8 @@ export const PROCEDURES: MedicalItem[] = [
     category: "ct"
   },
   {
-    canonical: "CT Cervical Spine W/O Contrast",
-    variations: ["ct cervical spine w/o contra", "ct cervical spine without contrast", "ct c spine w/o"],
+    canonical: "CT, cervical spine, w/o contrast",
+    variations: ["ct cervical spine w/o contra", "ct cervical spine without contrast", "ct c spine w/o", "CT cervical spine, w/o contra, 15 min", "CT, cervical spine, w/o contrast"],
     category: "ct"
   },
   {
@@ -285,6 +291,17 @@ export const PROCEDURES: MedicalItem[] = [
   },
   
   // MRI/MRA
+
+  {
+    canonical: "MR, angiogram, head, w/o contrast",
+    variations: ["MR, angiogram, head, w/o contrast"],
+    category: "mri"
+  },
+  {
+    canonical: "MRI, breast, bilateral, w/wo contrast",
+    variations: ["MRI, breast, bilateral, w/wo contrast"],
+    category: "mri"
+  },
   {
     canonical: "MR Venogram Brain W/O",
     variations: ["mr venogram brain w/o", "mr venogram brain"],
