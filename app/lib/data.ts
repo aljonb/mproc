@@ -142,7 +142,7 @@ export const PROCEDURES: MedicalItem[] = [
   },
   {
     canonical: "US venous",
-    variations: ["us venous doppler", "ultrasound venous doppler", "US, venous", "US, duplex, venous, lower extremity (perform)"],
+    variations: ["us venous doppler", "ultrasound venous doppler", "US, venous", "US, duplex, venous, lower extremity (perform)", "US, doppler, venous"],
     category: "ultrasound"
   },
   {
@@ -390,6 +390,11 @@ export const PROCEDURES: MedicalItem[] = [
   {
     canonical: "MRI brain w/o contrast",
     variations: ["mri brain without contrast", "mri brain w/o contrast", "MRI, brain, w/o contrast (submit)"],
+    category: "mri"
+  },
+  {
+    canonical: "MRI, cervical spine, w/wo contrast",
+    variations: ["MRI, cervical spine, w/wo contrast"],
     category: "mri"
   },
   {
