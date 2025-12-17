@@ -599,7 +599,7 @@ export const PROCEDURES: MedicalItem[] = [
   },
   {
     canonical: "EVOX",
-    variations: ["evox", "electrophysiologic evaluation", "elctrophysiologic evaluation"],
+    variations: ["evox", "electrophysiologic evaluation", "elctrophysiologic evaluation", "evoked potential"],
     category: "test"
   },
   {
