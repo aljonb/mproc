@@ -280,7 +280,7 @@ export const PROCEDURES: MedicalItem[] = [
     category: "ct"
   },
   {
-    canonical: "CT Sinuses W/O Contrast",
+    canonical: "CT Sinuses w/o Contrast",
     variations: ["ct sinuses w/o contrast", "ct sinuses without contrast"],
     category: "ct"
   },
@@ -624,7 +624,7 @@ export const PROCEDURES: MedicalItem[] = [
   },
   {
     canonical: "PVR",
-    variations: ["pvr", "pulse volume recording"],
+    variations: ["pvr", "pulse volume recording", "PVR_SCHEDULE"],
     category: "test"
   },
   {
